@@ -96,13 +96,13 @@ def plot_conic(coeffs, points):
     ax = fig.add_subplot(111, projection='3d')
     ax.scatter(points[:, 0], points[:, 1], points[:, 2], color='blue', label='Points')
 
-    x_vals = np.linspace(points[:, 0].min(), points[:, 0].max(), 50)
-    y_vals = np.linspace(points[:, 1].min(), points[:, 1].max(), 50)
-    X, Y = np.meshgrid(x_vals, y_vals)
-
-    Z = np.sqrt(np.abs(-(A * X**2 + B * Y**2 + D *X * Y + G * X + H * Y + J) / C))
+    t_vals = np.linspace(points[:, 0].min(), points[:, 0].max(), 100)
+    x_vals = t_vals
+    y_vals = (-G * x_vals - J) / H
+    z_vals = np.sqrt(np.abs(-(A*x_vals**2 + B * y_vals**2 + D * x_vals * y_vals + G * x_vals + H * y_vals + J) / C))
     
-    ax.plot_surface(X, Y, Z, alpha=0.5, cmap='viridis', edgecolor='none')
+    
+    ax.plot(x_vals, y_vals, z_vals, color='red', linewidth=2, label = "Conic Trajectory")
     ax.set_xlabel("X")
     ax.set_ylabel("Y")
     ax.set_zlabel("Z")
