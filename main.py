@@ -3,82 +3,55 @@ from collections import namedtuple
 from scipy.spatial import ConvexHull
 import numpy as np
 import matplotlib.pyplot as plt
+from ellipse import Ellipse
+from convexhull import ConvexHullCalc
 Point = namedtuple("Point", ["x", "y", "z"])
 #loads data, expecting it to be in cartesian form
 
 
 def main():
-    points = load_data()
-    max_dist, pair = diameter(points)
+    theta = np.linspace(0, 2 * np.pi, 30)
+    a = 5
+    b = 3
+    x = a * np.cos(theta) + np.random.normal(0, 0.2, size=theta.shape)
+    y = b * np.cos(theta) + np.random.normal(0, 0.2, size=theta.shape)
+
+    z = np.random.normal(0, 0.2, size = theta.shape) #random height variations
+    points = np.vstack([x, y, z]).T
+
+    hullanalyzer = ConvexHullCalc(points)
+    max_dist, pair = hullanalyzer.diameter(points)
+
+    print("Diameter of convex hull: ", max_dist)
     if pair:
-        plotdiameter(points, pair)
-    print("The diameter given by the points is " + str(max_dist))
-
-    coefficients = conic_trajectory(points)
-    plot_conic(coefficients, points)
-
-
-def load_data():
-    return np.random.rand(30, 3)
-def get_convexhull(points) -> ConvexHull:
-    hull = ConvexHull(points)
-    return hull
-#computes diameter
-def signed_area(a, b, c) -> float:
-    #a, b, c are the points
-    #compute v1 and v2:
-    v1 = b - a
-    v2 = c - a
-
-    #cross product:
-    cross_product = np.cross(v1, v2)
-
-    #compute signed area
-    return np.linalg.norm(cross_product)
-
-def diameter(points):
-    convexhull = get_convexhull(points)
-    antipodal = set()
-    vertices = convexhull.vertices
-    m = len(convexhull.vertices)
-    k = 2
-
-    #find initial k
-    while signed_area(points[vertices[m - 1]], points[vertices[0]], points[vertices[k + 1]]) > signed_area(points[vertices[m - 1]], points[vertices[0]], points[vertices[k]]):
-        k += 1
+        hullanalyzer.plotdiameter(points, pair)
     
-    #find antipodal pairs
-    i = 1
-    j = k
-    while (i <= k and j <= m):
-        antipodal.add((tuple(points[vertices[i]]), tuple(points[vertices[j]])))
-        while (signed_area(points[vertices[i]], points[vertices[i + 1]], points[vertices[j + 1]]) > signed_area(points[vertices[i]], points[vertices[i + 1]], points[vertices[j]]) and j < m):
-            antipodal.add((tuple(points[vertices[i]]), tuple(points[vertices[j]])))
-            j += 1
-        i += 1
-    #find max squared distance
-    max_dist = 0
-    pair = None
-    for p1, p2 in antipodal:
-        distance = np.linalg.norm(np.array(p1) - np.array(p2))
-        if distance > max_dist:
-            max_dist = distance
-            pair = (p1, p2)
+    ellipsefit = Ellipse(points)
+    ellipse_coefficients = ellipsefit.fit2d()
+    ellipse_3d = ellipsefit.transformback(ellipse_coefficients)
+    ellipsefit.plot_ellipse(ellipse_3d)
 
-    return max_dist, pair
-def plotdiameter(points, pair):
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    ax.scatter(points[:, 0], points[:, 1], points[:, 2], color = 'blue', label = 'Points')
-    x_vals = [pair[0][0], pair[1][0]]
-    y_vals = [pair[0][1], pair[1][1]]
-    z_vals = [pair[0][2], pair[1][2]]
-    ax.plot(x_vals, y_vals, z_vals, color='red', linewidth = 2, label="Diameter")
-    ax.set_xlabel("X")
-    ax.set_ylabel("Y")
-    ax.set_zlabel("Z")
-    plt.legend()
-    plt.show()
+if __name__ == "__main__":
+    main()
+    
+"""
+def ellipse(points):
+    theta = np.linspace(0, 2*np.pi, 100)
+    major = 5
+    minor = 3
+
+    x = major * np.cos(theta)
+    y = minor * np.sin(theta)
+
+    noise_level = 0.2
+
+    x_noisy = x + np.random.normal(0, noise_level, size = x.shape)
+    y_noisy = x + np.random.normal(0, noise_level, size = y.shape)
+
+    plt.scatter(x_noisy, y_noisy)
+
+
+
 
 def conic_trajectory(points):
     x = points[:, 0]
@@ -109,10 +82,9 @@ def plot_conic(coeffs, points):
     plt.legend()
     plt.show()
 
+"""
 
 
-if __name__ == "__main__":
-    main()
 
 
 
